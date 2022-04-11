@@ -1,0 +1,98 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#main {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    display: inline-block;
+}
+
+.row {
+    display: flex;
+  }
+  
+.column {
+    flex: 50%;
+    align-content:center;
+    text-align: center;
+  }
+
+.label-50px {
+    font-size: 50px;
+}
+
+.number-50px {
+    height: 50px;
+    width: 150px;
+    font-size: 50px;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.speed_indicator {
+    font-size: 75px;
+    border:black;
+    background-color: gray;
+    border-width:5px;
+    border-style:solid;
+}
+
+.image-box {
+    margin: 10px;
+    width: 80%;
+    height: 12rem;
+    border:white;
+    border-width:5px;
+    border-style:solid;
+    align-self: center;
+    background-color: blue;
+}
+
+.button-pad {
+    margin: 10px;
+}
+
+/*
+.center {
+    background-color: purple;
+    height: 
+
+}
+*/
+
+.left-column {
+    height: 100%;
+    align-items: center;
+}
+
+.homepage_div {
+    border: black;
+    background-color: #CCCCCCCC;
+    border-width: 5px;
+    border-style: solid;
+}
+
+center {
+    align-items: center;
+    margin: auto;
+    height: 100%;
+}
+
+red {
+    color: red;
+}
+
+green {
+    color: green;
+}
