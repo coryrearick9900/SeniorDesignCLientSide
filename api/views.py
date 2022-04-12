@@ -22,6 +22,8 @@ import cv2
 
 import pika
 
+import base64
+
 current_reading = ""
 
 
@@ -88,6 +90,7 @@ host = 'localhost'
 queue = 'radar'
 readings_queue = 'readings'
 
+
 class GetDataPoint(generics.ListAPIView):
     
     def set_current_speed(self, ch, method, props, body):
@@ -129,6 +132,7 @@ class GetDataPoint(generics.ListAPIView):
         return HttpResponse(jsonObject, content_type="application/json" ,status=status.HTTP_200_OK)
 
 class Radar:
+    
     def setup(self):
         
         self.ports = serial.tools.list_ports.comports()
@@ -143,26 +147,26 @@ class Radar:
 
 
     def setUnits(self, serPort):
-        settingAdjustments = ["US\n", "R>3\n"]
+        settingAdjustments = ["US\n", "R>0", "Z-"]
+        # reports US units ----┘       |      |
+        # disables detection limit ----┘      |
+        # disables sensor hibernation --------┘
         
         for s in settingAdjustments:
             serPort.write(s.encode('ascii'))
-            #serPort.readline()
         
     def readSpeed(self, serPort):
         
         try:
             speed = float(serPort.readline())
-            
+                
             if (speed != NULL):
                 return speed
             else:
                 return 0
-            
-            #if (speed > speedThresh) or (speed < (speedThresh * -1)):
-                #publish to queue
         except ValueError:
             return 0
+            
 
 class Camera():
     def take_image(self):
@@ -172,9 +176,17 @@ class Camera():
         
         img_string = cv2.imencode('.png', frame)[1].tostring()
         
+        # return frame, and the encoded image
+        b64_string = ""
+        
+        with open(frame, "rb"):
+            b64_string = base64.b64encode(frame.read())
+            
+        
+        return frame, b64_string
+        
         
         #print("Frame is ", img_string)
-
 
 print("make port?")
 radar = Radar()
@@ -223,40 +235,48 @@ class GetLastSpeed(generics.ListAPIView):
         try:
             if(port.isOpen):
                 
-                print("its fucking open")
+                print("radar is open")
+                
+                # ------ TIMEOUT AFTER 0.3 SECONDS --------
                 last_speed = radar.readSpeed(port)
+                print("got ", last_speed)
+                # -----------------------------------------
                 
                 if (speedThresh != 0):
                     if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
                         # add an incident to the incidents queue
                         
                         camera = Camera()
-                        camera.take_image()
+                        image, encoded_image = camera.take_image()
                         
                         timestamp = datetime.now()
                         
-                        new_incident_str = '{ "speed": ' + str(last_speed) + ', "timestamp": ' + str(timestamp) + '}'
+                        new_incident_str = '{ "speed": ' + str(last_speed) + ', "timestamp": ' + str(timestamp) + ', "image": ' + encoded_image + '}'
+                        short_incident = '{ "speed": ' + str(last_speed) + ', "timestamp": ' + str(timestamp) + ', "image": ' + encoded_image[:20] + '}'
+                        
+                        print(short_incident)
                         
                         new_incident_json = json.loads(new_incident_str)
                         
+                        # Add the new incident to the queue
+                        # Then it must go to the actual database
                         
-                    
+                        
+                        
                     
                     
                     
             else:
-                print("its closed")
+                print("radar is closed")
+                return HttpResponse("Could not read from the sensor", content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
                     
             
             
-            
-            print("this found ", last_speed)
-            
             return HttpResponse(last_speed, content_type="application/json", status=status.HTTP_200_OK)
         except serial.serialutil.SerialException:
-            return HttpResponse("N/A", content_type="application/json", status=status.HTTP_404_NOT_FOUND)
+            return HttpResponse("Could not read from the sensor", content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except ValueError:
-            return HttpResponse(0, content_type="application/json", status=status.HTTP_404_NOT_FOUND)
+            return HttpResponse(0, content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         
         
