@@ -10,26 +10,20 @@ import { Grid, Button } from "@material-ui/core";
 export default class Homepage extends Component {
     constructor(props) {
         super(props);
-        this.state = {currentSpeed: 0 };
+        this.state = {
+            currentSpeed: 0,
+            image: ""
+        };
     }
 
 
     getSpeedFromBackend() {
-
-
+        
         fetch('/api/getLastReading').then((responce) =>
-        responce.json()
+            responce.json()
         ).then((data) => {
-            
-            console.log("Time to set the speed to " + data);
-            
-            this.setState({
-                currentSpeed: data
-            })
+            console.lof("DATA!" + data);
         });
-    
-    
-        //console.log("Speed is now " + this.state.currentSpeed);
     
     }
 
@@ -39,7 +33,7 @@ export default class Homepage extends Component {
     }
 
     componentDidMount() {
-        this.interval = setInterval(() => this.tick(), 500);
+        this.interval = setInterval(() => this.tick(), 1000);
       }
 
 

@@ -6,6 +6,7 @@ from aiohttp import request
 from cv2 import cuda_TargetArchs
 from django.shortcuts import render
 from itsdangerous import Serializer
+from matplotlib.animation import ImageMagickBase
 from rest_framework import generics, status
 from .models import DataPoint, RadarReading, SpeedThreshhold
 from .serializers import DataPointSeralizer, RadarSensorSerializer, SpeedThreshholdSerializer
@@ -14,6 +15,9 @@ from rest_framework.response import Response
 from django.http import HttpResponse, QueryDict
 import json
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
+import time
 
 import serial
 import serial.tools.list_ports
@@ -24,8 +28,9 @@ import pika
 
 import base64
 
-current_reading = ""
+import numpy as np
 
+current_reading = ""
 
 def set_current_speed(ch, method, props, body):
         
@@ -147,10 +152,11 @@ class Radar:
 
 
     def setUnits(self, serPort):
-        settingAdjustments = ["US\n", "R>0", "Z-"]
-        # reports US units ----┘       |      |
-        # disables detection limit ----┘      |
-        # disables sensor hibernation --------┘
+        settingAdjustments = ["US\n", "R>0\n", "Z-\n", "S<\n"]
+        # reports US units ----┘       |         |      |      
+        # disables detection limit ----┘         |      |
+        # disables sensor hibernation -----------┘      |
+        # changes the buffer size to 512 ---------------┘
         
         for s in settingAdjustments:
             serPort.write(s.encode('ascii'))
@@ -170,7 +176,7 @@ class Radar:
 
 class Camera():
     def take_image(self):
-        camera = cv2.VideoCapture(0)
+        camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         
         ret_val, frame = camera.read()
         
@@ -195,6 +201,9 @@ radar.setUnits(port)
 
 class GetSpeedThreshhold(generics.ListAPIView):
     def get(self, request, format=None):
+        
+        
+        
         serializer = SpeedThreshholdSerializer(data=request.query_params)
         speedThresh = 0
         
@@ -215,11 +224,28 @@ class GetSpeedThreshhold(generics.ListAPIView):
         else:
             return Response("Could not collect current speed threashold", status=status.HTTP_204_NO_CONTENT)
 
+
+def average(list):
+    sum = 0
+    length = len(list)
+    for i in list:
+        sum += i
+    
+    return float(sum/length)
+
+vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
 class GetLastSpeed(generics.ListAPIView):
     
     def get(self, request, format=None):
         
+        pre = datetime.now()
+        
         last_speed = -999
+        
+        port.flushOutput()
+        port.flushInput()
+        port.flush()
         
         serializer = SpeedThreshholdSerializer(data=request.query_params)
         speedThresh = 0
@@ -237,29 +263,67 @@ class GetLastSpeed(generics.ListAPIView):
                 
                 print("radar is open")
                 
-                # ------ TIMEOUT AFTER 0.3 SECONDS --------
-                last_speed = radar.readSpeed(port)
-                print("got ", last_speed)
-                # -----------------------------------------
+                values = []
                 
-                if (speedThresh != 0):
-                    if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
-                        # add an incident to the incidents queue
-                        
-                        camera = Camera()
-                        image, encoded_image = camera.take_image()
-                        
-                        timestamp = datetime.now()
-                        
-                        new_incident_str = '{ "speed": ' + str(last_speed) + ', "timestamp": ' + str(timestamp) + ', "image": ' + encoded_image + '}'
-                        short_incident = '{ "speed": ' + str(last_speed) + ', "timestamp": ' + str(timestamp) + ', "image": ' + encoded_image[:20] + '}'
-                        
-                        print(short_incident)
-                        
-                        new_incident_json = json.loads(new_incident_str)
-                        
-                        # Add the new incident to the queue
-                        # Then it must go to the actual database
+                for i in range(5):
+                    sub_speed = radar.readSpeed(port)
+                    print("Sub reading is", sub_speed)
+                    
+                    values.append(sub_speed)
+                    
+                    time.sleep(0.001)
+                
+                last_speed = average(values)
+                last_speed_s = str(last_speed)
+                print("got ", last_speed, " compared ot thresh=", speedThresh)
+                
+                #if (speedThresh != 0):
+                #if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
+                if (True):
+                    # add an incident to the incidents queue
+                    
+                    
+                    ret, image = vid.read()
+                    
+                    retval, encoded_image = cv2.imencode('.png', image)
+                    base64_img = base64.b64encode(encoded_image).decode('utf-8')
+                    base64_sht = base64.b64encode(encoded_image[:50]).decode('utf-8')
+                    
+                    timestamp = str(datetime.now())
+                    
+                    #new_incident_str = '{ "speed": ' + last_speed_s + ', "timestamp": ' + timestamp + ', "image": ' + encoded_image + '}'
+                    
+                    new_incident_str = {
+                        "speed": last_speed_s,
+                        "timestamp": timestamp,
+                        "image": base64_img
+                    }
+                    
+                    short_incident = {
+                        "speed": last_speed_s,
+                        "timestamp": timestamp,
+                        "image": base64_sht
+                    }
+                    
+                    #fff = open("Y:\-- All the School Courses --\Past Courses\CMPSC 484\Testing Image to String\\newimage.txt", "w")
+                    #fff.write(encoded_image)
+                    
+                    print(short_incident)
+                    
+                    new_incident_json = json.dumps(new_incident_str)
+                    
+                    # Add the new incident to the queue
+                    # Then it must go to the actual database
+                    
+                    
+                    post = datetime.now()
+                    
+                    delta_t = relativedelta(post, pre)
+                    
+                    print("This process took", '{s}s, {ms}ms'.format(s=delta_t.seconds, ms=(delta_t.microseconds)/1000))
+                    
+                    
+                    return Response(new_incident_json, content_type="application/json", status=status.HTTP_200_OK)
                         
                         
                         
@@ -270,12 +334,21 @@ class GetLastSpeed(generics.ListAPIView):
                 print("radar is closed")
                 return HttpResponse("Could not read from the sensor", content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
                     
+            reading_json_str = {
+                "speed": str(last_speed)
+            }
             
+            reading_json = json.dumps(reading_json_str)
             
-            return HttpResponse(last_speed, content_type="application/json", status=status.HTTP_200_OK)
+            print("parsing", reading_json_str)
+            print("returning", reading_json)
+            
+            return HttpResponse(reading_json, content_type="application/json", status=status.HTTP_200_OK)
         except serial.serialutil.SerialException:
+            print("no bueno")
             return HttpResponse("Could not read from the sensor", content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except ValueError:
+            print("Nope")
             return HttpResponse(0, content_type="application/json", status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         
