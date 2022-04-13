@@ -304,10 +304,6 @@ class GetLastSpeed(generics.ListAPIView):
                         "timestamp": timestamp,
                         "image": base64_sht
                     }
-                                        
-                    new_incident_json = json.dumps(new_incident_str)
-                    
-                    print("TYPE: ", type(new_incident_json))
                     
                     # Add the new incident to the queue
                     # Then it must go to the actual database
@@ -320,7 +316,7 @@ class GetLastSpeed(generics.ListAPIView):
                     print("This process took", '{s}s, {ms}ms'.format(s=delta_t.seconds, ms=(delta_t.microseconds)/1000))
                     
                     
-                    return Response(new_incident_str, content_type="application/json", status=status.HTTP_200_OK)
+                    return Response(short_incident, content_type="application/json", status=status.HTTP_200_OK)
                         
                         
                         

@@ -30,10 +30,9 @@ export default class Homepage extends Component {
                     image: data['image']
                 };
 
-                console.log("Type of response: " + typeof(response));
-                console.log("Type of data: " + typeof(data));
                 console.log("SPEEEEED IS " + this.state.currentSpeed);
-                console.log("The image is " + this.state.image);
+                console.log("Image is " + this.state.image);
+
             }).catch(console.error);
 
     }
@@ -43,7 +42,6 @@ export default class Homepage extends Component {
     }
 
     componentDidMount() {
-        this.getSpeedFromBackend = this.getSpeedFromBackend.bind(this);
 
         this.interval = setInterval(() => this.tick(), 1000);
       }
