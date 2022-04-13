@@ -15,7 +15,7 @@ export default class SpeedIndicator extends Component {
                     <h>Current Speed:</h>
                 </div>
                 <div class="speed_indicator">
-                    <label><SpeedText speed={this.props.speed}/> MPH!</label>
+                    <label><SpeedText speed_text={this.props.speed}/> MPH</label>
                 </div>
 
             </>

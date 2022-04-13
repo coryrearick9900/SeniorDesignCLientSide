@@ -10,7 +10,7 @@ export default class SpeedText extends Component {
     render() {
         return (
             <>
-                <label>{this.props.speed}</label>
+                <label>{this.props.speed_text}</label>
             </>
         );
     }

@@ -14,25 +14,37 @@ export default class Homepage extends Component {
             currentSpeed: 0,
             image: ""
         };
+
+        
     }
 
 
     getSpeedFromBackend() {
-        
-        fetch('/api/getLastReading').then((responce) =>
-            responce.json()
-        ).then((data) => {
-            console.lof("DATA!" + data);
-        });
-    
+
+        fetch('/api/getLastReading')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                this.state = {
+                    currentSpeed: data['speed'],
+                    image: data['image']
+                };
+
+                console.log("Type of response: " + typeof(response));
+                console.log("Type of data: " + typeof(data));
+                console.log("SPEEEEED IS " + this.state.currentSpeed);
+                console.log("The image is " + this.state.image);
+            }).catch(console.error);
+
     }
 
     tick() {
-
         this.getSpeedFromBackend();
     }
 
     componentDidMount() {
+        this.getSpeedFromBackend = this.getSpeedFromBackend.bind(this);
+
         this.interval = setInterval(() => this.tick(), 1000);
       }
 
@@ -44,7 +56,7 @@ export default class Homepage extends Component {
                 <div class="row">
                     <div class="column" >
                         <div class="left-column">
-                            <Image />
+                            <Image image={this.state.image}/>
                             <Grid container justify="center">
                                 <StartStop />
                             </Grid>

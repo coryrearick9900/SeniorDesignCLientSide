@@ -304,13 +304,10 @@ class GetLastSpeed(generics.ListAPIView):
                         "timestamp": timestamp,
                         "image": base64_sht
                     }
-                    
-                    #fff = open("Y:\-- All the School Courses --\Past Courses\CMPSC 484\Testing Image to String\\newimage.txt", "w")
-                    #fff.write(encoded_image)
-                    
-                    print(short_incident)
-                    
+                                        
                     new_incident_json = json.dumps(new_incident_str)
+                    
+                    print("TYPE: ", type(new_incident_json))
                     
                     # Add the new incident to the queue
                     # Then it must go to the actual database
@@ -323,7 +320,7 @@ class GetLastSpeed(generics.ListAPIView):
                     print("This process took", '{s}s, {ms}ms'.format(s=delta_t.seconds, ms=(delta_t.microseconds)/1000))
                     
                     
-                    return Response(new_incident_json, content_type="application/json", status=status.HTTP_200_OK)
+                    return Response(new_incident_str, content_type="application/json", status=status.HTTP_200_OK)
                         
                         
                         
