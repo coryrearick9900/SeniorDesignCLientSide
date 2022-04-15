@@ -17,6 +17,9 @@ import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+#Timeout library
+import asyncio
+
 import time
 
 import serial
@@ -237,7 +240,7 @@ vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 class GetLastSpeed(generics.ListAPIView):
     
-    def get(self, request, format=None):
+    async def get(self, request, format=None):
         
         pre = datetime.now()
         
@@ -266,7 +269,12 @@ class GetLastSpeed(generics.ListAPIView):
                 values = []
                 
                 for i in range(5):
-                    sub_speed = radar.readSpeed(port)
+                    #timeout here
+                    try:
+                        sub_speed = await asyncio.wait_for(radar.readSpeed(port), timeout=1.0)
+                    except asyncio.TimeoutError:
+                        #Set sub_speed to 0, continue
+                        sub_speed = 0
                     print("Sub reading is", sub_speed)
                     
                     values.append(sub_speed)
