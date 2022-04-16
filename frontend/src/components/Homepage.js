@@ -31,6 +31,11 @@ export default class Homepage extends Component {
                 };
 
                 console.log("SPEEEEED IS " + this.state.currentSpeed);
+                
+                //Decode from Base64 to bytes
+                imgdecode = atob(this.state.image);
+                this.state.image = imgdecode;
+
                 console.log("Image is " + this.state.image);
 
             }).catch(console.error);
