@@ -29,24 +29,12 @@ export default class Homepage extends Component {
             .then(response => response.json())
             .then(data => {
 
-                var image = data['image'];
+                console.log("SPEEEEED IS " + this.state.currentSpeed);
+                
+                //Decode from Base64 to bytes
+                imgdecode = atob(this.state.image);
+                this.state.image = imgdecode;
 
-                const ImageRender = ({image}) => <img src={`data:image/jpeg;base64,${image}`} />
-
-                ReactDOM.render(<ImageRender image={this.state.image} />, document.getElementById('image_container'));
-
-                var speed = data['speed'];
-                speed = Math.round(speed * 1000) / 1000;
-
-                this.setState({
-                    currentSpeed: speed,
-                    image: image
-                }, () => {
-                    console.log("state should be changed");
-                });
-
-
-                console.log("speeeeeeeed iS " + this.state.currentSpeed);
                 console.log("Image is " + this.state.image);
 
             }).catch(console.error);
