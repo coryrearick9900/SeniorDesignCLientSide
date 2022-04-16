@@ -14,9 +14,7 @@ export default class SpeedText extends Component {
         
         return (
 
-            <>
-                <label>{this.props.speed_text}</label>
-            </>
+            <label>{this.props.speed_text}</label>
         );
     }
 

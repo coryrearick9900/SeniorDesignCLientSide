@@ -6,31 +6,47 @@ import SpeedIndicator from './SpeedIndicator';
 import SpeedLimitChanger from './SpeedLimitChanger';
 import StartStop from './StartStop';
 import { Grid, Button } from "@material-ui/core";
+import { userState, useEffect } from "react";
+import ReactDOM from 'react-dom';
 
 export default class Homepage extends Component {
     constructor(props) {
         super(props);
-        this.state = {
-            currentSpeed: 0,
-            image: ""
-        };
 
+        this.state = {
+            "currentSpeed": 12,
+            "image": ""
+        }
         
     }
 
 
     getSpeedFromBackend() {
 
+
+        
         fetch('/api/getLastReading')
             .then(response => response.json())
             .then(data => {
-                console.log(data);
-                this.state = {
-                    currentSpeed: data['speed'],
-                    image: data['image']
-                };
 
-                console.log("SPEEEEED IS " + this.state.currentSpeed);
+                var image = data['image'];
+
+                const ImageRender = ({image}) => <img src={`data:image/jpeg;base64,${image}`} />
+
+                ReactDOM.render(<ImageRender image={this.state.image} />, document.getElementById('image_container'));
+
+                var speed = data['speed'];
+                speed = Math.round(speed * 1000) / 1000;
+
+                this.setState({
+                    currentSpeed: speed,
+                    image: image
+                }, () => {
+                    console.log("state should be changed");
+                });
+
+
+                console.log("speeeeeeeed iS " + this.state.currentSpeed);
                 console.log("Image is " + this.state.image);
 
             }).catch(console.error);
@@ -39,22 +55,32 @@ export default class Homepage extends Component {
 
     tick() {
         this.getSpeedFromBackend();
+        this.forceUpdate();
     }
 
     componentDidMount() {
 
         this.interval = setInterval(() => this.tick(), 1000);
-      }
+    
+    }
 
 
 
     render() {
+
+        
+
         return (
             <div class="homepage_div">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.min.js"></script>
+
                 <div class="row">
                     <div class="column" >
                         <div class="left-column">
-                            <Image image={this.state.image}/>
+                            <div id="image_container" class="image_container">
+                                
+                            </div>
                             <Grid container justify="center">
                                 <StartStop />
                             </Grid>
@@ -63,8 +89,16 @@ export default class Homepage extends Component {
                     <div class="column">
                         <DataBaseConnection />
                         <hr />
-                        <SpeedIndicator speed={this.state.currentSpeed} />
+                        
+                            <div class="label-50px">
+                                <h>Current Speed:</h>
+                            </div>
+                            <div class="speed_indicator">
+                                <Speed speed={this.state.currentSpeed} />
+                            </div>
+
                         <hr />
+
                         <SpeedLimitChanger />
                     </div>
                 </div>
@@ -72,3 +106,9 @@ export default class Homepage extends Component {
         );
     }
 }
+
+const Speed = ({ speed }) => (
+    <label>{speed} MPH</label>
+);
+
+const ImageRender = ({image}) => <img src={`image:image/jpeg;base64,${image}`} />

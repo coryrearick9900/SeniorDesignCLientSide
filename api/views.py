@@ -313,7 +313,7 @@ class GetLastSpeed(generics.ListAPIView):
                     # Then it must go to the actual database
                     
                     
-                    return Response(short_incident, content_type="application/json", status=status.HTTP_200_OK)
+                    return Response(new_incident_str, content_type="application/json", status=status.HTTP_200_OK)
                         
                         
                         

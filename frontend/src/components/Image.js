@@ -12,7 +12,7 @@ export default class Image extends Component {
         return (
             <div class="center" >
                 <div class="image-box">
-                    
+                    <img src={this.props.image} />
                 </div>
             </div>
         );
