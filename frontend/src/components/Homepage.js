@@ -14,7 +14,7 @@ export default class Homepage extends Component {
         super(props);
 
         this.state = {
-            "currentSpeed": 12,
+            "currentSpeed": 0,
             "image": ""
         }
         

@@ -281,39 +281,56 @@ class GetLastSpeed(generics.ListAPIView):
                 last_speed = average(values)
                 last_speed_s = str(last_speed)
                 
-                #if (speedThresh != 0):
-                #if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
-                if (True):
-                    # add an incident to the incidents queue
-                    
-                    
-                    ret, image = vid.read()
-                    
-                    retval, encoded_image = cv2.imencode('.png', image)
-                    base64_img = base64.b64encode(encoded_image).decode('utf-8')
-                    base64_sht = base64.b64encode(encoded_image[:50]).decode('utf-8')
-                    
-                    timestamp = str(datetime.now())
-                    
-                    #new_incident_str = '{ "speed": ' + last_speed_s + ', "timestamp": ' + timestamp + ', "image": ' + encoded_image + '}'
-                    
-                    new_incident_str = {
-                        "speed": last_speed_s,
-                        "timestamp": timestamp,
-                        "image": base64_img
-                    }
-                    
-                    short_incident = {
-                        "speed": last_speed_s,
-                        "timestamp": timestamp,
-                        "image": base64_sht
-                    }
-                    
-                    # Add the new incident to the queue
-                    # Then it must go to the actual database
-                    
-                    
-                    return Response(new_incident_str, content_type="application/json", status=status.HTTP_200_OK)
+                if (speedThresh != 0):
+                    if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
+                
+                        # add an incident to the incidents queue
+                        
+                        
+                        ret, image = vid.read()
+                        
+                        print("DIMENSIONS = ", image.shape)
+                        
+                        width = image.shape[1]
+                        height = image.shape[0]
+                        
+                        new_height = 300
+                        new_width = 400
+                        
+                        new_size = (new_width, new_height)
+                        
+                        image = cv2.resize(image, new_size, interpolation = cv2.INTER_AREA)
+                        
+                        retval, encoded_image = cv2.imencode('.png', image)
+                        base64_img  = base64.b64encode(encoded_image).decode('utf-8')
+                        base64_shrt = base64.b64encode(encoded_image[:50]).decode('utf-8')
+                        
+                        timestamp = str(datetime.now())
+                        
+                        new_incident_str = {
+                            "speed": last_speed_s,
+                            "timestamp": timestamp,
+                            "image": base64_img
+                        }
+                        
+                        short_incident = {
+                            "speed": last_speed_s,
+                            "timestamp": timestamp,
+                            "image": base64_shrt
+                        }
+                        
+                        # Add the new incident to the queue
+                        # Then it must go to the actual database
+                        
+                        
+                        return Response(new_incident_str, content_type="application/json", status=status.HTTP_200_OK)
+                    else:
+                        reading = {
+                            "speed": last_speed
+                        }
+                        
+                        return Response(reading, content_type="application/json", status=status.HTTP_200_OK)
+                        
                         
                         
                         
