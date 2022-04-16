@@ -3,6 +3,7 @@ from importlib.resources import Resource
 from multiprocessing.sharedctypes import Value
 from telnetlib import STATUS
 from aiohttp import request
+from async_timeout import timeout
 from cv2 import cuda_TargetArchs
 from django.shortcuts import render
 from itsdangerous import Serializer
@@ -147,7 +148,7 @@ class Radar:
             if (('USB Serial Device' in p.description) or ('IFX CDC' in p.description)):
                 COMPort = p.device
                 
-        serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 1)
+        serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 0.5)
         return serPort
 
 
@@ -171,9 +172,9 @@ class Radar:
             else:
                 return 0
         except ValueError:
-            return 0
-            
-
+            return 0            
+        
+        
 class Camera():
     def take_image(self):
         camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -194,7 +195,6 @@ class Camera():
         
         #print("Frame is ", img_string)
 
-print("make port?")
 radar = Radar()
 port = radar.setup()
 radar.setUnits(port)
@@ -271,7 +271,7 @@ class GetLastSpeed(generics.ListAPIView):
                         sub_speed = radar.readSpeed(port)
                     except serial.SerialTimeoutException:
                         #Set sub_speed to 0, continue
-                        sub_speed = 0
+                        sub_speed = 0                    
                     print("Sub reading is", sub_speed)
                     
                     values.append(sub_speed)
@@ -280,7 +280,6 @@ class GetLastSpeed(generics.ListAPIView):
                 
                 last_speed = average(values)
                 last_speed_s = str(last_speed)
-                print("got ", last_speed, " compared ot thresh=", speedThresh)
                 
                 #if (speedThresh != 0):
                 #if ((last_speed > speedThresh) or (last_speed < (speedThresh * -1))):
@@ -312,13 +311,6 @@ class GetLastSpeed(generics.ListAPIView):
                     
                     # Add the new incident to the queue
                     # Then it must go to the actual database
-                    
-                    
-                    post = datetime.now()
-                    
-                    delta_t = relativedelta(post, pre)
-                    
-                    print("This process took", '{s}s, {ms}ms'.format(s=delta_t.seconds, ms=(delta_t.microseconds)/1000))
                     
                     
                     return Response(short_incident, content_type="application/json", status=status.HTTP_200_OK)
