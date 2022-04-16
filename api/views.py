@@ -17,9 +17,6 @@ import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-#Timeout library
-import asyncio
-
 import time
 
 import serial
@@ -150,7 +147,7 @@ class Radar:
             if (('USB Serial Device' in p.description) or ('IFX CDC' in p.description)):
                 COMPort = p.device
                 
-        serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE)
+        serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 1)
         return serPort
 
 
@@ -240,7 +237,7 @@ vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 class GetLastSpeed(generics.ListAPIView):
     
-    async def get(self, request, format=None):
+    def get(self, request, format=None):
         
         pre = datetime.now()
         
@@ -269,10 +266,10 @@ class GetLastSpeed(generics.ListAPIView):
                 values = []
                 
                 for i in range(5):
-                    #timeout here
+                    #timeout in radar code
                     try:
-                        sub_speed = await asyncio.wait_for(radar.readSpeed(port), timeout=1.0)
-                    except asyncio.TimeoutError:
+                        sub_speed = radar.readSpeed(port)
+                    except serial.SerialTimeoutException:
                         #Set sub_speed to 0, continue
                         sub_speed = 0
                     print("Sub reading is", sub_speed)
