@@ -111,9 +111,9 @@ export default class Homepage extends Component {
                             <div class="label-50px">
                                 <h>Current Speed:</h>
                             </div>
-                            <div class="speed_indicator">
-                                <Speed speed={this.state.currentSpeed} />
-                            </div>
+                                <div class="speed_indicator">
+                                    <Speed speed={this.state.currentSpeed} />
+                                </div>
 
                         <hr />
 
