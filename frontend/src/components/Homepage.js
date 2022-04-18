@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, isValidElement, useState } from 'react';
 import Image from "./Image"
 import DataBaseConnection from './DataBaseConnection';
 import {BrowserRouter, Switch, Routes, Link, Route, Redirect} from 'react-router-dom'
@@ -9,51 +9,66 @@ import { Grid, Button } from "@material-ui/core";
 import { userState, useEffect } from "react";
 import ReactDOM from 'react-dom';
 
+
+
 export default class Homepage extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
             "currentSpeed": 0,
-            "image": ""
+            "image": "",
+            active: false
         }
+
         
     }
 
 
     getSpeedFromBackend() {
 
+        //console.log("state must be true");
 
-        
-        fetch('/api/getLastReading')
+        if (this.state.active) {
+
+            fetch('/api/getLastReading')
             .then(response => response.json())
             .then(data => {
-
+                
                 var image = data['image'];
-
+                
                 const ImageRender = ({image}) => <img src={`data:image/jpeg;base64,${image}`} />
-
+                
                 ReactDOM.render(<ImageRender image={this.state.image} />, document.getElementById('image_container'));
-
+                
                 var speed = data['speed'];
                 speed = Math.round(speed * 1000) / 1000;
-
-                this.setState({
-                    currentSpeed: speed,
-                    image: image
-                }, () => {
-                    console.log("state should be changed");
-                });
-
-
-                console.log("speeeeeeeed iS " + this.state.currentSpeed);
-                console.log("Image is " + this.state.image);
-
-            }).catch(console.error);
-
-    }
-
-    tick() {
+                
+                    this.setState({
+                        currentSpeed: speed,
+                        image: image
+                    }, () => {
+                        //console.log("state should be changed");
+                    });
+                    
+                    
+                    //console.log("speeeeeeeed iS " + this.state.currentSpeed);
+                    //console.log("Image is " + this.state.image);
+                    
+                }).catch(console.error);
+                
+            }else {
+                this.setState(
+                    {
+                        "currentSpeed": 0,
+                        "image": ""
+                    }
+                );
+            }
+                
+            }
+            
+            tick() {
         this.getSpeedFromBackend();
         this.forceUpdate();
     }
@@ -63,8 +78,6 @@ export default class Homepage extends Component {
         this.interval = setInterval(() => this.tick(), 1000);
     
     }
-
-
 
     render() {
 
@@ -82,7 +95,12 @@ export default class Homepage extends Component {
                                 
                             </div>
                             <Grid container justify="center">
-                                <StartStop />
+                                <button onClick={() => {this.state.active = true; console.log("State is now " + this.state.active)}}  >
+                                    Start Collection
+                                </button>
+                                <button onClick={() => {this.state.active = false; console.log("State is now " + this.state.active)}} >
+                                    Stop Collection
+                                </button>
                             </Grid>
                         </div>
                     </div>
@@ -110,5 +128,3 @@ export default class Homepage extends Component {
 const Speed = ({ speed }) => (
     <label>{speed} MPH</label>
 );
-
-const ImageRender = ({image}) => <img src={`image:image/jpeg;base64,${image}`} />

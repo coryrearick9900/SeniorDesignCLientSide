@@ -147,9 +147,13 @@ class Radar:
             #print("P is ", p)
             if (('USB Serial Device' in p.description) or ('IFX CDC' in p.description)):
                 COMPort = p.device
-                
-        serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 0.5)
-        return serPort
+        
+        try:
+            serPort = serial.Serial(COMPort, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 0.5)
+            return serPort
+        except UnboundLocalError:
+            print("Serial port could not be initialized.")
+            return None
 
 
     def setUnits(self, serPort):
@@ -197,12 +201,14 @@ class Camera():
 
 radar = Radar()
 port = radar.setup()
+
+if (port == None):
+    exit()
+
 radar.setUnits(port)
 
 class GetSpeedThreshhold(generics.ListAPIView):
     def get(self, request, format=None):
-        
-        
         
         serializer = SpeedThreshholdSerializer(data=request.query_params)
         speedThresh = 0
@@ -288,6 +294,7 @@ class GetLastSpeed(generics.ListAPIView):
                         
                         
                         ret, image = vid.read()
+                        orig_image = image
                         
                         print("DIMENSIONS = ", image.shape)
                         
@@ -302,6 +309,8 @@ class GetLastSpeed(generics.ListAPIView):
                         image = cv2.resize(image, new_size, interpolation = cv2.INTER_AREA)
                         
                         retval, encoded_image = cv2.imencode('.png', image)
+                        retval, encoded_image = cv2.imencode('.png', orig_image)
+                        
                         base64_img  = base64.b64encode(encoded_image).decode('utf-8')
                         base64_shrt = base64.b64encode(encoded_image[:50]).decode('utf-8')
                         

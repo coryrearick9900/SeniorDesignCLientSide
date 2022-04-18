@@ -79,9 +79,6 @@ export default class SpeedLimitChanger extends Component {
         
     }
 
-    sayHello() {
-        console.log("Hello, it's chief");
-    }
 
     render() {
         return (
