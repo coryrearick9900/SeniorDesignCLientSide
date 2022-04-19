@@ -1,13 +1,3 @@
-from asyncio.windows_events import NULL
-from importlib.resources import Resource
-from multiprocessing.sharedctypes import Value
-from telnetlib import STATUS
-from aiohttp import request
-from async_timeout import timeout
-from cv2 import cuda_TargetArchs
-from django.shortcuts import render
-from itsdangerous import Serializer
-from matplotlib.animation import ImageMagickBase
 from rest_framework import generics, status
 from .models import DataPoint, RadarReading, SpeedThreshhold
 from .serializers import DataPointSeralizer, RadarSensorSerializer, SpeedThreshholdSerializer
@@ -171,7 +161,7 @@ class Radar:
         try:
             speed = float(serPort.readline())
                 
-            if (speed != NULL):
+            if (speed != None):
                 return speed
             else:
                 return 0
